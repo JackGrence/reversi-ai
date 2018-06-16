@@ -18,9 +18,9 @@ class tree:
         self.__max_depth = max_depth
         self.__cur_index = 0
         self.pruning_node = []
-        self.root = self.node(self.__min, 0, None, self.__branch)
+        self.root = self.node(self.__min, 0, None, self.__branch, True)
         self.build_tree(self.root, 0, False)
-        self.alpha_beta_pruning(self.root, 0, True, self.__min, self.__max)
+        self.alpha_beta_pruning(self.root, 0, self.__min, self.__max)
         # self.minimax(self.root, 0, True)
         # catch leaf_len < 1 or leaf is empty
 
@@ -54,7 +54,7 @@ class tree:
     def build_tree(self, cur_node, depth, is_max):
         for i in range(self.__branch):
             value = self.__min if is_max else self.__max
-            new_node = self.node(value, depth + 1, cur_node, self.__branch)
+            new_node = self.node(value, depth + 1, cur_node, self.__branch, is_max)
             cur_node.child.append(new_node)
             if depth + 1 == self.__max_depth:
                 new_node.value = self.__leaf[self.__cur_index]
@@ -77,13 +77,14 @@ class tree:
             child_index += 1
         return cur_node.value
 
-    def alpha_beta_pruning(self, cur_node, depth, is_max, alpha, beta):
+    def alpha_beta_pruning(self, cur_node, depth, alpha, beta):
+        is_max = cur_node.is_max
         if depth >= self.__max_depth:
             return cur_node.value
         child_index = 0
         for i in cur_node.child:
             value = self.alpha_beta_pruning(i, depth + 1,
-                                            not is_max, alpha, beta)
+                                            alpha, beta)
             if is_max:
                 # get maximizing of child
                 if value > cur_node.value:
@@ -108,9 +109,10 @@ class tree:
         return cur_node.value
 
     class node:
-        def __init__(self, value, depth, parent, max_child_len):
+        def __init__(self, value, depth, parent, max_child_len, is_max):
             self.value = value
             self.depth = depth
             self.parent = parent
             self.child = []
             self.max_child_len = max_child_len
+            self.is_max = is_max
