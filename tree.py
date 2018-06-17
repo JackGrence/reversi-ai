@@ -1,25 +1,14 @@
 import queue
+from reversi import *
 
 
 class tree:
-    def __init__(self, branch, max_depth, leaf):
-        self.__branch = branch
-        self.__leaf_len = branch ** max_depth
-        self.__leaf = leaf[:]
-        self.__max = leaf[0]
-        self.__min = leaf[0]
-        for i in leaf[1:]:
-            if self.__max < i:
-                self.__max = i
-            if self.__min > i:
-                self.__min = i
-        self.__max += 1
-        self.__min -= 1
+    def __init__(self, max_depth, cur_board):
+        self.__max = 0x7fffffff
+        self.__min = -self.__max
         self.__max_depth = max_depth
-        self.__cur_index = 0
-        self.pruning_node = []
-        self.root = self.node(self.__min, 0, None, self.__branch, True)
-        self.build_tree(self.root, 0, False)
+        self.root = self.node(self.__min, 0, None, cur_board, True, 0)
+        self.build_tree(self.root, 0)
         self.alpha_beta_pruning(self.root, 0, self.__min, self.__max)
         # self.minimax(self.root, 0, True)
         # catch leaf_len < 1 or leaf is empty
@@ -38,22 +27,39 @@ class tree:
             last_node_depth = cur_node.depth
         print('')
 
-    def build_tree(self, cur_node, depth, is_max):
-        for i in range(self.__branch):
-            value = self.__min if is_max else self.__max
-            new_node = self.node(value, depth + 1, cur_node, self.__branch, is_max)
-            cur_node.child.append(new_node)
-            if depth + 1 == self.__max_depth:
-                new_node.value = self.__leaf[self.__cur_index]
-                self.__cur_index += 1
+    def build_tree(self, cur_node, depth):
+        if cur_node.board.game_over:
+            cur_node.value = self.get_sbe(cur_node)
+            return
+        if not cur_node.board.flips:
+            print('impossible')
+            return
+        for i in cur_node.board.flips:
+            new_board = cur_node.board.get_future_board(i)
+            if cur_node.board.current_player == new_board.current_player:
+                is_max = cur_node.is_max
             else:
-                self.build_tree(new_node, depth + 1, not is_max)
+                is_max = not cur_node.is_max
+
+            if is_max:
+                value = self.__min
+            else:
+                value = self.__max
+            new_node = self.node(value, depth + 1, cur_node, new_board, is_max, i)
+            cur_node.child.append(new_node)
+
+            if depth + 1 == self.__max_depth:
+                new_node.value = self.get_sbe(new_node)
+            else:
+                self.build_tree(new_node, depth + 1)
+
+    def get_sbe(self, cur_node):
+        return 5
 
     def alpha_beta_pruning(self, cur_node, depth, alpha, beta):
         is_max = cur_node.is_max
-        if depth >= self.__max_depth:
+        if not cur_node.child:
             return cur_node.value
-        child_index = 0
         for i in cur_node.child:
             value = self.alpha_beta_pruning(i, depth + 1,
                                             alpha, beta)
@@ -61,6 +67,7 @@ class tree:
                 # get maximizing of child
                 if value > cur_node.value:
                     cur_node.value = value
+                    cur_node.choice = i.pos
                 # update alpha
                 if cur_node.value > alpha:
                     alpha = cur_node.value
@@ -68,11 +75,10 @@ class tree:
                 # get minimizing of child
                 if value < cur_node.value:
                     cur_node.value = value
+                    cur_node.choice = i.pos
                 # update beta
                 if cur_node.value < beta:
                     beta = cur_node.value
-            # record pruning index
-            child_index += 1
 
             # alpha-beta pruning
             if alpha >= beta:
@@ -80,10 +86,12 @@ class tree:
         return cur_node.value
 
     class node:
-        def __init__(self, value, depth, parent, max_child_len, is_max):
+        def __init__(self, value, depth, parent, cur_board, is_max, pos):
             self.value = value
             self.depth = depth
             self.parent = parent
             self.child = []
-            self.max_child_len = max_child_len
+            self.board = cur_board
             self.is_max = is_max
+            self.choice = 0
+            self.pos = pos

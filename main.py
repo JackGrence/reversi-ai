@@ -1,6 +1,7 @@
 import time
 import random
 from reversi import *
+from tree import tree
 
 
 def main():
@@ -34,17 +35,21 @@ def start():
         if new_round.current_player == ai:
             pos = reversi_ai(new_round)
         else:
-            #pos = input('{} please put chess: '.format(new_round.current_player))
-            pos = reversi_ai(new_round)
+            pos = input('{} please put chess: '.format(new_round.current_player))
+            #pos = reversi_ai(new_round)
         new_round.put_chess(pos)
         new_round.draw_board()
         print(hex(new_round.white), hex(new_round.black))
         new_round.get_who_win()
-        time.sleep(0.1)
+
 
 def reversi_ai(new_round):
-    pos = random.choice(list(new_round.flips))
+    max_depth = 4
+    minimax = tree(max_depth, new_round)
+    #pos = random.choice(list(new_round.flips))
+    pos = minimax.root.choice
     print('AI: ', new_round.pos2str[pos])
+    del minimax
     return new_round.pos2str[pos]
 
 

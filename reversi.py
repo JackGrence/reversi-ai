@@ -1,5 +1,8 @@
 class game:
 
+    black_str = 'black'
+    white_str = 'white'
+
     def __init__(self, white=0x0000001008000000,
                  black=0x0000000810000000, current_player='black'):
         self.create_table()
@@ -9,9 +12,6 @@ class game:
         self.flips = {}
         self.current_player = current_player
         self.can_put_pos()
-        print(self.flips)
-        for k, v in self.flips.items():
-            print(hex(k), hex(v))
 
     def draw_board(self):
         result = ui.BOTTOM_LINE
@@ -40,7 +40,7 @@ class game:
         self.flips.clear()
 
         # get current player
-        if self.current_player == 'black':
+        if self.current_player == self.black_str:
             cur_player, next_player = self.black, self.white
         else:
             cur_player, next_player = self.white, self.black
@@ -87,27 +87,30 @@ class game:
     def put_chess(self, pos):
         pos = self.str2pos(pos)
 
+        self.put_chess_by_num(pos)
+
+    def put_chess_by_num(self, pos):
         if pos not in self.flips:
             print('invalid value')
         else:
             self.white ^= self.flips[pos]
             self.black ^= self.flips[pos]
 
-            if self.current_player == 'black':
+            if self.current_player == self.black_str:
                 self.black |= pos
-                self.current_player = 'white'
+                self.current_player = self.white_str
             else:
                 self.white |= pos
-                self.current_player = 'black'
+                self.current_player = self.black_str
 
             self.can_put_pos()
 
             # opponent can't put chess
             if not self.flips:
-                if self.current_player == 'black':
-                    self.current_player = 'white'
+                if self.current_player == self.black_str:
+                    self.current_player = self.white_str
                 else:
-                    self.current_player = 'black'
+                    self.current_player = self.black_str
                 self.can_put_pos()
 
                 # game over
@@ -164,6 +167,26 @@ class game:
             num += self.byte2count[chesses & 0xff]
             chesses >>= 8
         return num
+
+    def get_future_board(self, pos):
+        white = self.white ^ self.flips[pos]
+        black = self.black ^ self.flips[pos]
+        if self.current_player == self.black_str:
+            black = black | pos
+            player = self.white_str
+        else:
+            white = white | pos
+            player = self.black_str
+
+        future_board = game(white, black, player)
+        if not future_board.flips:
+            # can't move
+            future_board.current_player = self.current_player
+            future_board.can_put_pos()
+            if not future_board.flips:
+                # game over
+                future_board.game_over = True
+        return future_board
 
 
 class ui:
