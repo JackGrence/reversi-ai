@@ -24,19 +24,6 @@ class tree:
         # self.minimax(self.root, 0, True)
         # catch leaf_len < 1 or leaf is empty
 
-    def get_pruning_leaf(self):
-        leaf = []
-        for i in self.pruning_node:
-            self.get_leaf(i, leaf)
-        return leaf
-
-    def get_leaf(self, cur_node, leaf):
-        if cur_node.depth == self.__max_depth:
-            leaf.append(cur_node.value)
-            return
-        for i in cur_node.child:
-            self.get_leaf(i, leaf)
-
     def print(self, print_node):
         last_node_depth = -1
         q = queue.Queue()
@@ -61,21 +48,6 @@ class tree:
                 self.__cur_index += 1
             else:
                 self.build_tree(new_node, depth + 1, not is_max)
-
-    def minimax(self, cur_node, depth, is_max):
-        if depth >= self.__max_depth:
-            return cur_node.value
-        child_index = 0
-        for i in cur_node.child:
-            value = self.minimax(i, depth + 1, not is_max)
-            if is_max:
-                if value > cur_node.value:
-                    cur_node.value = value
-            else:
-                if value < cur_node.value:
-                    cur_node.value = value
-            child_index += 1
-        return cur_node.value
 
     def alpha_beta_pruning(self, cur_node, depth, alpha, beta):
         is_max = cur_node.is_max
@@ -104,7 +76,6 @@ class tree:
 
             # alpha-beta pruning
             if alpha >= beta:
-                self.pruning_node.extend(cur_node.child[child_index:])
                 break
         return cur_node.value
 
