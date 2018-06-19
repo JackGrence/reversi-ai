@@ -12,7 +12,6 @@ class tree:
         self.root = self.node(self.__min, 0, None, cur_board, True, 1)
         self.build_tree(self.root, 0)
         self.alpha_beta_pruning(self.root, 0, self.__min, self.__max)
-        self.last_choice()
         # self.minimax(self.root, 0, True)
         # catch leaf_len < 1 or leaf is empty
 
@@ -54,7 +53,6 @@ class tree:
             print('what? root is\'n max level(?' * 50)
         self.update_tree(self.root, 0)
         self.alpha_beta_pruning(self.root, 0, self.__min, self.__max)
-        self.last_choice()
 
     def update_tree(self, cur_node, depth):
         cur_node.depth = depth
@@ -128,58 +126,37 @@ class tree:
             weight = reversi_ai.get_move_ability(cur_node)
         return weight
 
-    def last_choice(self):
-        self.root.value = self.__min
-
-        # choice corner first
-        choices = [self.root.child[0].pos]
-        for child in self.root.child:
-
-            if self.root.board.corner_null(child.pos):
-                xy = child.board.pos2xy[child.pos]
-                child.value += reversi_ai.xy2weight[xy[1]][xy[0]]
-
-            if child.board.can_put_corner(child.pos):
-                # avoid opponent get corner
-                child.value -= 4
-
-            if child.value > self.root.value:
-                self.root.value = child.value
-                choices.clear()
-                choices.append(child.pos)
-            elif child.value == self.root.value:
-                choices.append(child.pos)
-
-        self.root.choice = random.choice(choices)
-
     def alpha_beta_pruning(self, cur_node, depth, alpha, beta):
         is_max = cur_node.is_max
         if not cur_node.child:
             return cur_node.value
 
         choices = [cur_node.child[0].pos]
-        for i in cur_node.child:
-            value = self.alpha_beta_pruning(i, depth + 1,
+        for child in cur_node.child:
+            value = self.alpha_beta_pruning(child, depth + 1,
                                             alpha, beta)
+            # add square weight at every move
             if is_max:
+                value += reversi_ai.get_square_weight(child)
                 # get maximizing of child
                 if value > cur_node.value:
                     cur_node.value = value
                     choices.clear()
-                    choices.append(i.pos)
+                    choices.append(child.pos)
                 elif value == cur_node.value:
-                    choices.append(i.pos)
+                    choices.append(child.pos)
                 # update alpha
                 if cur_node.value > alpha:
                     alpha = cur_node.value
             else:
+                value -= reversi_ai.get_square_weight(child)
                 # get minimizing of child
                 if value < cur_node.value:
                     cur_node.value = value
                     choices.clear()
-                    choices.append(i.pos)
+                    choices.append(child.pos)
                 elif value == cur_node.value:
-                    choices.append(i.pos)
+                    choices.append(child.pos)
                 # update beta
                 if cur_node.value < beta:
                     beta = cur_node.value
@@ -254,3 +231,14 @@ class reversi_ai:
             return 0
 
         return (ai_move - opponent_move) / (ai_move + opponent_move)
+
+    def get_square_weight(cur_node):
+        value = 0
+        if cur_node.parent.board.corner_null(cur_node.pos):
+            xy = cur_node.board.pos2xy[cur_node.pos]
+            value += reversi_ai.xy2weight[xy[1]][xy[0]]
+
+        if cur_node.board.can_put_corner(cur_node.pos):
+            # avoid opponent get corner
+            value -= 4
+        return value

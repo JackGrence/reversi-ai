@@ -12,11 +12,8 @@ def start():
     steps = 'f5d6c5f6e6b4c6b6d7f4d3c8a6b5d8e8e7f8c7c3f7e3g6a5a4h6h5h4g5g8a3c4g3f3g4h3c2b3d2f2f1e1d1e2b7c1b1a8b8'
     steps = 'e6f6c4e3f5f4f3d3c3d2d1c1b1c2e1e2f1f2g1c6g4g5d6h3h5g3g6c7b6a5c8d8e8d7e7f8g8f7b8b5c5b3a7b4a3a4a6b2h4h6g2h1h2a1g7h8h7a8a2b7'
     steps = ''
-    new_round = game(0x10090507040000, 0x1c04763818080000, 'black')
-    new_round = game(0x818bc7c78504, 0x3c3c7e7438383838, 'black')
-    new_round = game(0x408730005070c0c, 0x38100c1f1a180000, 'black')
-    new_round = game(0x4285180bfbf5c9c, 0x3814ae7f40402020, 'black')
-    new_round = game()
+    new_round = game(0x38003911a1403c, 0x3c04ffc6ee5e3c00, 'white')
+    #new_round = game()
 
     for i in range(0, len(steps), 2):
         new_round.draw_board()
@@ -94,5 +91,5 @@ def reversi_ai(new_round, minimax=None, steps=None):
 
 
 if __name__ == "__main__":
-    debug_print = False
+    debug_print = True
     main()
