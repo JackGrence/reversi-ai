@@ -87,11 +87,12 @@ class game:
     def put_chess(self, pos):
         pos = self.str2pos(pos)
 
-        self.put_chess_by_num(pos)
+        return self.put_chess_by_num(pos)
 
     def put_chess_by_num(self, pos):
         if pos not in self.flips:
             print('invalid value')
+            return False
         else:
             self.white ^= self.flips[pos]
             self.black ^= self.flips[pos]
@@ -117,6 +118,7 @@ class game:
                 if not self.flips:
                     self.game_over = True
                     self.get_who_win()
+            return True
 
     def str2pos(self, pos):
         if len(pos) < 2:
@@ -187,6 +189,39 @@ class game:
                 # game over
                 future_board.game_over = True
         return future_board
+
+    def get_winner(self):
+        white = self.count_chess(self.white)
+        black = self.count_chess(self.black)
+        if white > black:
+            self.winner = self.white_str
+        elif black > white:
+            self.winner = self.black_str
+        else:
+            self.winner = 'draw'
+
+    def can_put_corner(self, put_pos):
+        if put_pos & 0x40c0000000000000:
+            return (0x8000000000000000 in self.flips)
+        elif put_pos & 0x0203000000000000:
+            return (0x0100000000000000 in self.flips)
+        elif put_pos & 0xc040:
+            return (0x80 in self.flips)
+        elif put_pos & 0x0302:
+            return (0x01 in self.flips)
+        return False
+
+    def corner_null(self, pos):
+        board_status = self.white | self.black
+        if pos & 0x40c0000000000000:
+            return not (0x8000000000000000 & board_status)
+        elif pos & 0x0203000000000000:
+            return not (0x0100000000000000 & board_status)
+        elif pos & 0xc040:
+            return not (0x80 & board_status)
+        elif pos & 0x0302:
+            return not (0x01 & board_status)
+        return True
 
 
 class ui:
