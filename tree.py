@@ -9,6 +9,7 @@ class tree:
         self.__min = -self.__max
         self.__max_depth = max_depth
         self.player = cur_board.current_player
+        self.ai = reversi_ai()
         self.root = self.node(self.__min, 0, None, cur_board, True, 1)
         self.build_tree(self.root, 0)
         self.alpha_beta_pruning(self.root, 0, self.__min, self.__max)
@@ -123,7 +124,7 @@ class tree:
             else:
                 weight = self.__min
         else:
-            weight = reversi_ai.get_move_ability(cur_node)
+            weight = self.ai.get_move_ability(cur_node)
         return weight
 
     def alpha_beta_pruning(self, cur_node, depth, alpha, beta):
@@ -137,7 +138,7 @@ class tree:
                                             alpha, beta)
             # add square weight at every move
             if is_max:
-                value += reversi_ai.get_square_weight(child)
+                value += self.ai.get_square_weight(child)
                 # get maximizing of child
                 if value > cur_node.value:
                     cur_node.value = value
@@ -149,7 +150,7 @@ class tree:
                 if cur_node.value > alpha:
                     alpha = cur_node.value
             else:
-                value -= reversi_ai.get_square_weight(child)
+                value -= self.ai.get_square_weight(child)
                 # get minimizing of child
                 if value < cur_node.value:
                     cur_node.value = value
@@ -160,6 +161,8 @@ class tree:
                 # update beta
                 if cur_node.value < beta:
                     beta = cur_node.value
+
+            child.value = value
 
             # alpha-beta pruning
             if alpha >= beta:
@@ -190,17 +193,18 @@ class tree:
 
 class reversi_ai:
 
-    xy2weight = [[16, -3, 0.4, 0, 0, 0.4, -3, 16],
-                 [-3, -1, 0, 0, 0, 0, -1, -3],
-                 [0.4, 0, 0, 0, 0, 0, 0, 0.4],
-                 [0, 0, 0, 0, 0, 0, 0, 0],
-                 [0, 0, 0, 0, 0, 0, 0, 0],
-                 [0.4, 0, 0, 0, 0, 0, 0, 0.4],
-                 [-3, -1, 0, 0, 0, 0, -1, -3],
-                 [16, -3, 0.4, 0, 0, 0.4, -3, 16]]
+    def __init__(self):
+        self.xy2weight = [[16, -3, 0.2, 0, 0, 0.2, -3, 16],
+                         [-3, -1, 0, 0, 0, 0, -1, -3],
+                         [0.2, 0, 0, 0, 0, 0, 0, 0.2],
+                         [0, 0, 0, 0, 0, 0, 0, 0],
+                         [0, 0, 0, 0, 0, 0, 0, 0],
+                         [0.2, 0, 0, 0, 0, 0, 0, 0.2],
+                         [-3, -1, 0, 0, 0, 0, -1, -3],
+                         [16, -3, 0.2, 0, 0, 0.2, -3, 16]]
 
-    def get_move_ability(cur_node):
-        flips_len = len(cur_node.board.flips)
+    def get_move_ability(self, cur_node):
+        flips_len = self.get_flips_move_ability(cur_node.board.flips)
         if cur_node.is_max:
             ai_move = flips_len
         else:
@@ -221,7 +225,7 @@ class reversi_ai:
         board.current_player = tmp_player
         tmp_flips, board.flips = board.flips, tmp_flips
 
-        flips_len = len(tmp_flips)
+        flips_len = self.get_flips_move_ability(tmp_flips)
         if cur_node.is_max:
             opponent_move = flips_len
         else:
@@ -232,13 +236,22 @@ class reversi_ai:
 
         return (ai_move - opponent_move) / (ai_move + opponent_move)
 
-    def get_square_weight(cur_node):
+    def get_flips_move_ability(self, flips):
+        mask = 0xc3c300000000c3c3
+        count = 0
+        for flip in flips:
+            if flip & mask:
+                continue
+            count += 1
+        return count
+
+    def get_square_weight(self, cur_node):
         value = 0
         if cur_node.parent.board.corner_null(cur_node.pos):
             xy = cur_node.board.pos2xy[cur_node.pos]
-            value += reversi_ai.xy2weight[xy[1]][xy[0]]
+            value += self.xy2weight[xy[1]][xy[0]]
 
         if cur_node.board.can_put_corner(cur_node.pos):
             # avoid opponent get corner
-            value -= 4
+            value -= 16
         return value

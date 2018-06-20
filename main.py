@@ -13,7 +13,9 @@ def start():
     steps = 'e6f6c4e3f5f4f3d3c3d2d1c1b1c2e1e2f1f2g1c6g4g5d6h3h5g3g6c7b6a5c8d8e8d7e7f8g8f7b8b5c5b3a7b4a3a4a6b2h4h6g2h1h2a1g7h8h7a8a2b7'
     steps = ''
     new_round = game(0x38003911a1403c, 0x3c04ffc6ee5e3c00, 'white')
-    #new_round = game()
+    new_round = game(0x7c3470e8d45e0500, 0x98f172ba1783f, 'black')
+    new_round = game(0x1c287ca0202000, 0x3c2091021c000000, 'black')
+    new_round = game()
 
     for i in range(0, len(steps), 2):
         new_round.draw_board()
@@ -52,7 +54,7 @@ def start():
             steps2.clear()
 
             pos = input('{} please put chess: '.format(new_round.current_player))
-            #pos = reversi_ai(new_round)
+            #pos = random_ai(new_round)
         steps.append(pos)
         steps2.append(pos)
         if not new_round.put_chess(pos):
@@ -90,6 +92,11 @@ def reversi_ai(new_round, minimax=None, steps=None):
     return new_round.pos2str[pos], minimax
 
 
+def random_ai(new_round):
+    pos = random.choice(list(new_round.flips))
+    return new_round.pos2str[pos]
+
+
 if __name__ == "__main__":
-    debug_print = True
+    debug_print = False
     main()
