@@ -4,12 +4,12 @@ from reversi import *
 
 
 class tree:
-    def __init__(self, max_depth, cur_board, root=None):
+    def __init__(self, max_depth, cur_board, rates):
         self.__max = 0x7fffffff
         self.__min = -self.__max
         self.__max_depth = max_depth
         self.player = cur_board.current_player
-        self.ai = reversi_ai()
+        self.ai = reversi_ai(rates)
         self.root = self.node(self.__min, 0, None, cur_board, True, 1)
         self.build_tree(self.root, 0)
         self.alpha_beta_pruning(self.root, 0, self.__min, self.__max)
@@ -193,15 +193,12 @@ class tree:
 
 class reversi_ai:
 
-    def __init__(self):
-        self.xy2weight = [[16, -3, 0.2, 0, 0, 0.2, -3, 16],
-                         [-3, -1, 0, 0, 0, 0, -1, -3],
-                         [0.2, 0, 0, 0, 0, 0, 0, 0.2],
-                         [0, 0, 0, 0, 0, 0, 0, 0],
-                         [0, 0, 0, 0, 0, 0, 0, 0],
-                         [0.2, 0, 0, 0, 0, 0, 0, 0.2],
-                         [-3, -1, 0, 0, 0, 0, -1, -3],
-                         [16, -3, 0.2, 0, 0, 0.2, -3, 16]]
+    def __init__(self, rates):
+        xy2weight = [rates[i : i + 4] for i in range(0, 16, 4)]
+        self.xy2weight = [i + i[::-1] for i in xy2weight]
+        self.xy2weight = self.xy2weight + self.xy2weight[::-1]
+        self.move_rate = rates[16]
+        self.get_corner_rate = rates[17]
 
     def get_move_ability(self, cur_node):
         flips_len = self.get_flips_move_ability(cur_node.board.flips)
@@ -234,7 +231,7 @@ class reversi_ai:
         if ai_move + opponent_move == 0:
             return 0
 
-        return (ai_move - opponent_move) / (ai_move + opponent_move)
+        return self.move_rate * (ai_move - opponent_move) / (ai_move + opponent_move)
 
     def get_flips_move_ability(self, flips):
         mask = 0xc3c300000000c3c3
@@ -246,6 +243,7 @@ class reversi_ai:
         return count
 
     def get_square_weight(self, cur_node):
+        # larger value, more effective for ai
         value = 0
         if cur_node.parent.board.corner_null(cur_node.pos):
             xy = cur_node.board.pos2xy[cur_node.pos]
@@ -253,5 +251,5 @@ class reversi_ai:
 
         if cur_node.board.can_put_corner(cur_node.pos):
             # avoid opponent get corner
-            value -= 16
+            value -= self.get_corner_rate
         return value

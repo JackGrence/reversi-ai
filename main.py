@@ -5,10 +5,12 @@ from tree import tree
 
 
 def main():
-    start()
+    rates1 = [16, -3, 0.2, 0, -3, -1, 0, 0, 0.2, 0, 0, 0, 0, 0, 0, 0, 1, 16]
+    rates2 = [16, -3, 0.2, 0, -3, -1, 0, 0, 0.2, 0, 0, 0, 0, 0, 0, 0, 1, 16]
+    start(rates1, rates2)
 
 
-def start():
+def start(rates1, rates2):
     steps = 'f5d6c5f6e6b4c6b6d7f4d3c8a6b5d8e8e7f8c7c3f7e3g6a5a4h6h5h4g5g8a3c4g3f3g4h3c2b3d2f2f1e1d1e2b7c1b1a8b8'
     steps = 'e6f6c4e3f5f4f3d3c3d2d1c1b1c2e1e2f1f2g1c6g4g5d6h3h5g3g6c7b6a5c8d8e8d7e7f8g8f7b8b5c5b3a7b4a3a4a6b2h4h6g2h1h2a1g7h8h7a8a2b7'
     steps = ''
@@ -40,7 +42,7 @@ def start():
     while not new_round.game_over:
         if new_round.current_player == ai:
             if minimax is None:
-                pos, minimax = reversi_ai(new_round)
+                pos, minimax = reversi_ai(new_round, rates=rates1)
             else:
                 print('steps:', steps)
                 pos, minimax = reversi_ai(new_round, minimax, steps)
@@ -53,8 +55,8 @@ def start():
             #    pos, minimax2 = reversi_ai(new_round, minimax2, steps2)
             steps2.clear()
 
-            pos = input('{} please put chess: '.format(new_round.current_player))
-            #pos = random_ai(new_round)
+            #pos = input('{} please put chess: '.format(new_round.current_player))
+            pos = random_ai(new_round)
         steps.append(pos)
         steps2.append(pos)
         if not new_round.put_chess(pos):
@@ -65,7 +67,7 @@ def start():
         new_round.get_who_win()
 
 
-def reversi_ai(new_round, minimax=None, steps=None):
+def reversi_ai(new_round, minimax=None, steps=None, rates=None):
     max_depth = 4
     choice_num = len(new_round.flips)
 
@@ -75,7 +77,7 @@ def reversi_ai(new_round, minimax=None, steps=None):
         max_depth = 3
 
     if minimax is None:
-        minimax = tree(max_depth, new_round)
+        minimax = tree(max_depth, new_round, rates)
     else:
         steps = [new_round.str2pos(i) for i in steps]
         minimax.change_root(steps, max_depth)
