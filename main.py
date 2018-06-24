@@ -5,8 +5,10 @@ from tree import tree
 
 
 def main():
-    rates1 = [16, -3, 0.2, 0, -3, -1, 0, 0, 0.2, 0, 0, 0, 0, 0, 0, 0, 1, 16]
-    rates2 = [16, -3, 0.2, 0, -3, -1, 0, 0, 0.2, 0, 0, 0, 0, 0, 0, 0, 1, 16]
+    rates1 = [16.493296738018056, -2.883624559019017, -0.27522495676101005, 0.24883482375458854, -2.7879166342218102, -1.391894894844652, 0.21414223978775704, 0.24830969644457324, -0.2334222387914518, -0.31967043862508016, 0.36357947338445984, -0.0222878608526188, -0.4544234865629029, 0.4828408390965292, 0.11960137082476496, -0.10509588244347134, 0.9913504129076625, 15.894398655071832, 1]
+    rates1 = [16.33123068189905, -3.2920875509957725, -0.38444733220037886, -0.6300235883304337, -3.343574148918484, -1.4671741087078969, -0.46881555015335474, -0.475367875420275, 0.01954970778676013, 0.03708781001044134, -0.2626206937637492, 0.1158889767977537, 0.5151706240343635, 0.22689806371290938, -0.19201568890432022, 0.7489962131422395, 2.0275209495931046, 16.027022677375243, 0.8088093387019347]
+    rates1 = [16, -3, 0.2, 0, -3, -1, 0, 0, 0.2, 0, 0, 0, 0, 0, 0, 0, 1, 16, 320, 1]
+    rates2 = [16, -3, 0.2, 0, -3, -1, 0, 0, 0.2, 0, 0, 0, 0, 0, 0, 0, 1, 16, 1, 1]
     start(rates1, rates2)
 
 
@@ -17,6 +19,7 @@ def start(rates1, rates2):
     new_round = game(0x38003911a1403c, 0x3c04ffc6ee5e3c00, 'white')
     new_round = game(0x7c3470e8d45e0500, 0x98f172ba1783f, 'black')
     new_round = game(0x1c287ca0202000, 0x3c2091021c000000, 'black')
+    new_round = game(0x1030397031900, 0x3c3cfcfc68fc263c, 'white')
     new_round = game()
 
     for i in range(0, len(steps), 2):
@@ -55,8 +58,8 @@ def start(rates1, rates2):
             #    pos, minimax2 = reversi_ai(new_round, minimax2, steps2)
             steps2.clear()
 
-            #pos = input('{} please put chess: '.format(new_round.current_player))
-            pos = random_ai(new_round)
+            pos = input('{} please put chess: '.format(new_round.current_player))
+            #pos = random_ai(new_round)
         steps.append(pos)
         steps2.append(pos)
         if not new_round.put_chess(pos):
@@ -71,8 +74,8 @@ def reversi_ai(new_round, minimax=None, steps=None, rates=None):
     max_depth = 4
     choice_num = len(new_round.flips)
 
-    if choice_num >= 10:
-        max_depth = 2
+    #if choice_num >= 10:
+    #    max_depth = 2
     if choice_num >= 6:
         max_depth = 3
 

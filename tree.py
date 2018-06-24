@@ -117,12 +117,10 @@ class tree:
     def get_sbe(self, cur_node):
         if cur_node.board.game_over:
             cur_node.board.get_winner()
-            if cur_node.board.winner == self.player:
-                weight = self.__max
-            elif cur_node.board.winner == 'draw':
-                weight = 0
-            else:
-                weight = self.__min
+            weight = abs(cur_node.board.black_count - cur_node.board.white_count)
+            if cur_node.board.winner != self.player:
+                weight = -weight
+            weight *= self.ai.game_over_rate
         else:
             weight = self.ai.get_move_ability(cur_node)
         return weight
@@ -199,6 +197,8 @@ class reversi_ai:
         self.xy2weight = self.xy2weight + self.xy2weight[::-1]
         self.move_rate = rates[16]
         self.get_corner_rate = rates[17]
+        self.game_over_rate = rates[18]
+        self.square_rate = rates[19]
 
     def get_move_ability(self, cur_node):
         flips_len = self.get_flips_move_ability(cur_node.board.flips)
@@ -252,4 +252,4 @@ class reversi_ai:
         if cur_node.board.can_put_corner(cur_node.pos):
             # avoid opponent get corner
             value -= self.get_corner_rate
-        return value
+        return value * self.square_rate

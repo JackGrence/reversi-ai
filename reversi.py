@@ -152,16 +152,9 @@ class game:
             self.byte2count.append(num)
 
     def get_who_win(self):
-        white = self.count_chess(self.white)
-        black = self.count_chess(self.black)
-
-        print('white: {}, black {}'.format(white, black))
-        if black > white:
-            print('black win')
-        elif black < white:
-            print('white win')
-        else:
-            print('draw')
+        self.get_winner()
+        print('black: {}, white {}'.format(self.black_count, self.white_count))
+        print('winner: {}'.format(self.winner))
 
     def count_chess(self, chesses):
         num = 0
@@ -199,6 +192,8 @@ class game:
             self.winner = self.black_str
         else:
             self.winner = 'draw'
+        self.white_count = white
+        self.black_count = black
 
     def can_put_corner(self, put_pos):
         if put_pos & 0x40c0000000000000:
