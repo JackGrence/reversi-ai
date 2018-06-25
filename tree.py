@@ -118,7 +118,9 @@ class tree:
     def get_sbe(self, cur_node):
         if cur_node.board.game_over:
             cur_node.board.get_winner()
-            weight = abs(cur_node.board.black_count - cur_node.board.white_count)
+            weight = abs(
+                    cur_node.board.black_count - cur_node.board.white_count
+                    )
             if cur_node.board.winner != self.player:
                 weight = -weight
             weight *= self.ai.game_over_rate
@@ -128,10 +130,6 @@ class tree:
             weight += self.ai.get_square_weight(cur_node)
             weight += self.ai.get_coin_parity(cur_node)
             weight += self.ai.get_corner_captured(cur_node)
-            #if weight == 0.3968071210723698:
-            #    cur_node.board.draw_board()
-            #if weight == -0.2081416474325164:
-            #    cur_node.board.draw_board()
         return weight
 
     def alpha_beta_pruning(self, cur_node, depth, alpha, beta):
@@ -199,7 +197,7 @@ class tree:
 class reversi_ai:
 
     def __init__(self, rates):
-        xy2weight = [rates[i : i + 4] for i in range(0, 16, 4)]
+        xy2weight = [rates[i:i + 4] for i in range(0, 16, 4)]
         self.xy2weight = [i + i[::-1] for i in xy2weight]
         self.xy2weight = self.xy2weight + self.xy2weight[::-1]
         self.move_rate = rates[16]
@@ -239,7 +237,8 @@ class reversi_ai:
         if ai_move + opponent_move == 0:
             return 0
 
-        return self.move_rate * (ai_move - opponent_move) / (ai_move + opponent_move)
+        val = (ai_move - opponent_move) / (ai_move + opponent_move)
+        return self.move_rate * val
 
     def get_flips_move_ability(self, flips):
         mask = 0xc3c300000000c3c3
@@ -276,7 +275,7 @@ class reversi_ai:
                 opponent_weight += value
 
             pos <<= 1
-        
+
         return (ai_weight - opponent_weight)
 
     def get_stability(self, cur_node):
@@ -316,12 +315,15 @@ class reversi_ai:
         opponent_stability = 0
         for line in chess_lines:
             ai_stability += line.ai_stability + line.ai_conti_num
-            opponent_stability += line.opponent_stability + line.opponent_conti_num
+            opponent_stability += line.opponent_stability
+            opponent_stability += line.opponent_conti_num
 
         if ai_stability + opponent_stability == 0:
             return 0
 
-        return self.stability_rate * (ai_stability - opponent_stability) / (ai_stability + opponent_stability)
+        val = ai_stability - opponent_stability
+        val /= ai_stability + opponent_stability
+        return self.stability_rate * val
 
     def get_coin_parity(self, cur_node):
         cur_board = cur_node.board
@@ -336,7 +338,7 @@ class reversi_ai:
 
         ai_chess = cur_board.count_chess(ai_chess)
         opponent_chess = cur_board.count_chess(opponent_chess)
-        
+
         ai = ai_chess / (ai_chess + opponent_chess)
         opponent = opponent_chess / (ai_chess + opponent_chess)
         entropy = - ai * math.log2(ai) - opponent * math.log2(opponent)
@@ -382,12 +384,18 @@ class reversi_ai:
                         stability += 1
                     else:
                         pos2_conti = False
-                        
-                    pos1 = pos1 >> offset[0] if offset[0] > 0 else pos1 << -offset[0]
-                    pos2 = pos2 >> offset[1] if offset[1] > 0 else pos1 << -offset[1]
+
+                    if offset[0] > 0:
+                        pos1 >>= offset[0]
+                    else:
+                        pos1 <<= -offset[0]
+
+                    if offset[1] > 0:
+                        pos2 >>= offset[1]
+                    else:
+                        pos2 <<= -offset[1]
 
         return stability
-
 
 
 class chess_line:
