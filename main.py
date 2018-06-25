@@ -41,6 +41,7 @@ def start(rates1, rates2):
     steps = []
     minimax2 = None
     steps2 = []
+    ai_step = []
     while not new_round.game_over:
         if new_round.current_player == ai:
             if minimax is None:
@@ -49,6 +50,7 @@ def start(rates1, rates2):
                 print('steps:', steps)
                 pos, minimax = reversi_ai(new_round, minimax, steps)
             steps.clear()
+            ai_step.append(pos)
         else:
             #if minimax2 is None:
             #    pos, minimax2 = reversi_ai(new_round)
@@ -57,6 +59,8 @@ def start(rates1, rates2):
             #    pos, minimax2 = reversi_ai(new_round, minimax2, steps2)
             steps2.clear()
 
+            print('ai steps: ', ai_step)
+            ai_step.clear()
             pos = input('{} please put chess: '.format(new_round.current_player))
             #pos = random_ai(new_round)
         steps.append(pos)
