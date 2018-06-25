@@ -208,13 +208,13 @@ class game:
 
     def corner_null(self, pos):
         board_status = self.white | self.black
-        if pos & 0x40c0000000000000:
+        if pos & 0x60c0800000000000:
             return not (0x8000000000000000 & board_status)
-        elif pos & 0x0203000000000000:
+        elif pos & 0x0603010000000000:
             return not (0x0100000000000000 & board_status)
-        elif pos & 0xc040:
+        elif pos & 0x80c060:
             return not (0x80 & board_status)
-        elif pos & 0x0302:
+        elif pos & 0x010306:
             return not (0x01 & board_status)
         return True
 

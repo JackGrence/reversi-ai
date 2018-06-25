@@ -1,5 +1,6 @@
 import queue
 import random
+import math
 from reversi import *
 
 
@@ -124,6 +125,13 @@ class tree:
         else:
             weight = self.ai.get_move_ability(cur_node)
             weight += self.ai.get_stability(cur_node)
+            weight += self.ai.get_square_weight(cur_node)
+            weight += self.ai.get_coin_parity(cur_node)
+            weight += self.ai.get_corner_captured(cur_node)
+            #if weight == 0.3968071210723698:
+            #    cur_node.board.draw_board()
+            #if weight == -0.2081416474325164:
+            #    cur_node.board.draw_board()
         return weight
 
     def alpha_beta_pruning(self, cur_node, depth, alpha, beta):
@@ -137,7 +145,6 @@ class tree:
                                             alpha, beta)
             # add square weight at every move
             if is_max:
-                value += self.ai.get_square_weight(child)
                 # get maximizing of child
                 if value > cur_node.value:
                     cur_node.value = value
@@ -149,7 +156,6 @@ class tree:
                 if cur_node.value > alpha:
                     alpha = cur_node.value
             else:
-                value -= self.ai.get_square_weight(child)
                 # get minimizing of child
                 if value < cur_node.value:
                     cur_node.value = value
@@ -245,16 +251,33 @@ class reversi_ai:
         return count
 
     def get_square_weight(self, cur_node):
-        # larger value, more effective for ai
-        value = 0
-        if cur_node.parent.board.corner_null(cur_node.pos):
-            xy = cur_node.board.pos2xy[cur_node.pos]
-            value += self.xy2weight[xy[1]][xy[0]]
+        cur_board = cur_node.board
 
-        if cur_node.board.can_put_corner(cur_node.pos):
-            # avoid opponent get corner
-            value -= self.get_corner_rate
-        return value * self.square_rate
+        # max level XOR current player is black == True, then ai is white
+        if cur_node.is_max ^ (cur_board.current_player == cur_board.black_str):
+            ai_chess = cur_board.white
+            opponent_chess = cur_board.black
+        else:
+            ai_chess = cur_board.black
+            opponent_chess = cur_board.white
+
+        ai_weight = 0
+        opponent_weight = 0
+        pos = 1
+        for i in range(64):
+            value = 0
+            if cur_board.corner_null(pos):
+                xy = cur_node.board.pos2xy[pos]
+                value += self.xy2weight[xy[1]][xy[0]]
+
+            if pos & ai_chess:
+                ai_weight += value
+            elif pos & opponent_chess:
+                opponent_weight += value
+
+            pos <<= 1
+        
+        return (ai_weight - opponent_weight)
 
     def get_stability(self, cur_node):
         cur_board = cur_node.board
@@ -292,13 +315,79 @@ class reversi_ai:
         ai_stability = 0
         opponent_stability = 0
         for line in chess_lines:
-            ai_stability += line.ai_stability
-            opponent_stability += line.opponent_stability
+            ai_stability += line.ai_stability + line.ai_conti_num
+            opponent_stability += line.opponent_stability + line.opponent_conti_num
 
         if ai_stability + opponent_stability == 0:
             return 0
 
         return self.stability_rate * (ai_stability - opponent_stability) / (ai_stability + opponent_stability)
+
+    def get_coin_parity(self, cur_node):
+        cur_board = cur_node.board
+
+        # max level XOR current player is black == True, then ai is white
+        if cur_node.is_max ^ (cur_board.current_player == cur_board.black_str):
+            ai_chess = cur_board.white
+            opponent_chess = cur_board.black
+        else:
+            ai_chess = cur_board.black
+            opponent_chess = cur_board.white
+
+        ai_chess = cur_board.count_chess(ai_chess)
+        opponent_chess = cur_board.count_chess(opponent_chess)
+        
+        ai = ai_chess / (ai_chess + opponent_chess)
+        opponent = opponent_chess / (ai_chess + opponent_chess)
+        entropy = - ai * math.log2(ai) - opponent * math.log2(opponent)
+
+        return entropy
+
+    def get_corner_captured(self, cur_node):
+        cur_board = cur_node.board
+
+        # max level XOR current player is black == True, then ai is white
+        if cur_node.is_max ^ (cur_board.current_player == cur_board.black_str):
+            ai_chess = cur_board.white
+            opponent_chess = cur_board.black
+        else:
+            ai_chess = cur_board.black
+            opponent_chess = cur_board.white
+
+        ai_corner = self.get_corner_stability(ai_chess)
+        opponent_corner = self.get_corner_stability(opponent_chess)
+
+        if ai_corner + opponent_corner == 0:
+            return 0
+
+        return (ai_corner - opponent_corner) / (ai_corner + opponent_corner)
+
+    def get_corner_stability(self, player):
+        corners = [0x8000000000000000, 0x0100000000000000, 0x80, 0x01]
+        offsets = [[1, 8], [-1, 8], [1, -8], [-1, -8]]
+        stability = 0
+        for corner, offset in zip(corners, offsets):
+            if player & corner:
+                pos1 = corner
+                pos2 = corner
+                pos1_conti = True
+                pos2_conti = True
+                for i in range(7):
+                    if pos1 & player and pos1_conti:
+                        stability += 1
+                    else:
+                        pos1_conti = False
+
+                    if pos2 & player and pos2_conti:
+                        stability += 1
+                    else:
+                        pos2_conti = False
+                        
+                    pos1 = pos1 >> offset[0] if offset[0] > 0 else pos1 << -offset[0]
+                    pos2 = pos2 >> offset[1] if offset[1] > 0 else pos1 << -offset[1]
+
+        return stability
+
 
 
 class chess_line:
@@ -307,9 +396,9 @@ class chess_line:
         self.ai_stability = 0
         self.opponent_stability = 0
         self.ai_conti_num = 0
-        self.ai_stack = 0
+        self.ai_stack = 1
         self.opponent_conti_num = 0
-        self.opponent_stack = 0
+        self.opponent_stack = 1
 
     def update(self, chess):
         # 0 is ai, 1 is opponent, 2 is null
