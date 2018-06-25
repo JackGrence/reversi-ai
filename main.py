@@ -2,6 +2,7 @@ import time
 import random
 from reversi import *
 from tree import tree
+__version__ = '1.0'
 
 
 def main():
