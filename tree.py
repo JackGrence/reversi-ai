@@ -123,6 +123,7 @@ class tree:
             weight *= self.ai.game_over_rate
         else:
             weight = self.ai.get_move_ability(cur_node)
+            weight += self.ai.get_stability(cur_node)
         return weight
 
     def alpha_beta_pruning(self, cur_node, depth, alpha, beta):
@@ -199,6 +200,7 @@ class reversi_ai:
         self.get_corner_rate = rates[17]
         self.game_over_rate = rates[18]
         self.square_rate = rates[19]
+        self.stability_rate = rates[20]
 
     def get_move_ability(self, cur_node):
         flips_len = self.get_flips_move_ability(cur_node.board.flips)
@@ -253,3 +255,86 @@ class reversi_ai:
             # avoid opponent get corner
             value -= self.get_corner_rate
         return value * self.square_rate
+
+    def get_stability(self, cur_node):
+        cur_board = cur_node.board
+
+        # max level XOR current player is black == True, then ai is white
+        if cur_node.is_max ^ (cur_board.current_player == cur_board.black_str):
+            ai_chess = cur_board.white
+            opponent_chess = cur_board.black
+        else:
+            ai_chess = cur_board.black
+            opponent_chess = cur_board.white
+
+        chess_lines = [chess_line() for i in range(46)]
+        # line order:
+        # -, |, /, \
+        # 0, 8, 16, 31
+        line_index = [0, 8, 16, 31]
+
+        pos = 0x8000000000000000
+        for row in range(8):
+            for col in range(8):
+                if pos & ai_chess:
+                    chess = 0
+                elif pos & opponent_chess:
+                    chess = 1
+                else:
+                    chess = 2
+                # update line
+                chess_lines[line_index[0] + row].update(chess)
+                chess_lines[line_index[1] + col].update(chess)
+                chess_lines[line_index[2] + row + col].update(chess)
+                chess_lines[line_index[3] + (7 - row) + col].update(chess)
+                pos >>= 1
+
+        ai_stability = 0
+        opponent_stability = 0
+        for line in chess_lines:
+            ai_stability += line.ai_stability
+            opponent_stability += line.opponent_stability
+
+        if ai_stability + opponent_stability == 0:
+            return 0
+
+        return self.stability_rate * (ai_stability - opponent_stability) / (ai_stability + opponent_stability)
+
+
+class chess_line:
+
+    def __init__(self):
+        self.ai_stability = 0
+        self.opponent_stability = 0
+        self.ai_conti_num = 0
+        self.ai_stack = 0
+        self.opponent_conti_num = 0
+        self.opponent_stack = 0
+
+    def update(self, chess):
+        # 0 is ai, 1 is opponent, 2 is null
+        if chess == 0:
+            if self.ai_stack:
+                if self.opponent_conti_num != 0:
+                    self.opponent_stability += self.opponent_conti_num
+            else:
+                self.ai_stack = 1
+
+            self.ai_conti_num += 1
+            self.opponent_conti_num = 0
+
+        elif chess == 1:
+            if self.opponent_stack:
+                if self.ai_conti_num != 0:
+                    self.ai_stability += self.ai_conti_num
+            else:
+                self.opponent_stack = 1
+
+            self.opponent_conti_num += 1
+            self.ai_conti_num = 0
+
+        elif chess == 2:
+            self.ai_conti_num = 0
+            self.ai_stack = 0
+            self.opponent_conti_num = 0
+            self.opponent_stack = 0
